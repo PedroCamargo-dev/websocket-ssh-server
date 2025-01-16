@@ -80,7 +80,7 @@ Este servidor é composto por três pacotes principais:
      ```json
       {
          "type": "config",
-         "content": "{\"host\":\"172.26.207.37\",\"port\":22,\"username\":\"pedrocamargo\", \"password\":\"Senha\",\"privateKey\":\"\"}"
+         "content": "{\"host\":\"172.26.207.37\",\"port\":22,\"user\":\"pedrocamargo\", \"password\":\"Senha\",\"privateKey\":\"\"}"
       }
      ```
 
@@ -92,7 +92,7 @@ Este servidor é composto por três pacotes principais:
      ```json
       {
          "type": "config",
-         "content": "{\"host\":\"192.168.1.111\",\"port\":22,\"username\":\"pedrocamargo\",\"password\":\"Senha\",\"privateKey\":\"privateKey\"}"
+         "content": "{\"host\":\"192.168.1.111\",\"port\":22,\"user\":\"pedrocamargo\",\"password\":\"Senha\",\"privateKey\":\"privateKey\"}"
       }
      ```
 

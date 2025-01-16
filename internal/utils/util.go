@@ -9,9 +9,9 @@ import (
 type SSHConfig struct {
 	Host       string `json:"host"`
 	Port       int    `json:"port"`
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	PrivateKey string `json:"privateKey"`
+	User       string `json:"user"`
+	Password   string `json:"password,omitempty"`
+	PrivateKey string `json:"privateKey,omitempty"`
 }
 
 type WSMessage struct {
@@ -25,7 +25,8 @@ func GetSSHAuthMethods(config SSHConfig) []ssh.AuthMethod {
 	authMethods := []ssh.AuthMethod{}
 	if config.Password != "" {
 		authMethods = append(authMethods, ssh.Password(config.Password))
-	} else if config.PrivateKey != "" {
+	}
+	if config.PrivateKey != "" {
 		var key ssh.Signer
 		var err error
 

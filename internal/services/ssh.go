@@ -42,7 +42,7 @@ func StartSSHSession(ctx context.Context, configJSON string, conn *websocket.Con
 	authMethods := utils.GetSSHAuthMethods(config)
 
 	clientConfig := &ssh.ClientConfig{
-		User:            config.Username,
+		User:            config.User,
 		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
