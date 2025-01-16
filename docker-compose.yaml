@@ -1,0 +1,23 @@
+services:
+  ssh-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      - PORT=8080
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128MB
+      restart_policy:
+        condition: on-failure
+    networks:
+      - ssh-server-network
+
+networks:
+  ssh-server-network:
+    driver: bridge
