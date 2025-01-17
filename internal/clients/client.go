@@ -42,8 +42,6 @@ func AddClient(clientID string, client *Client) {
 // Example usage:
 //
 //	CleanupConnection("client-123")
-//
-// FILEPATH: /home/pedrocamargo/projects/ssh-web-based/websocket-ssh-server/internal/clients/client.go
 func CleanupConnection(clientID string) {
 	mu.Lock()
 	client, exists := clients[clientID]
