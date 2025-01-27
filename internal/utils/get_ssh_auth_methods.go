@@ -21,6 +21,18 @@ type WSMessage struct {
 	Cols    int    `json:"cols,omitempty"`
 }
 
+// GetSSHAuthMethods returns a slice of ssh.AuthMethod based on the provided SSHConfig.
+// It supports password authentication and private key authentication with or without a passphrase.
+//
+// Parameters:
+//   - config: SSHConfig containing the authentication details.
+//
+// Returns:
+//   - []ssh.AuthMethod: A slice of ssh.AuthMethod to be used for SSH authentication.
+//
+// If a password is provided in the config, it will be used for password authentication.
+// If a private key is provided, it will be parsed and used for public key authentication.
+// If both a private key and a password are provided, the private key will be parsed with the passphrase.
 func GetSSHAuthMethods(config SSHConfig) []ssh.AuthMethod {
 	authMethods := []ssh.AuthMethod{}
 	if config.Password != "" {

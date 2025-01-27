@@ -36,7 +36,7 @@ type SSHSession struct {
 func StartSSHSession(ctx context.Context, configJSON string, conn *websocket.Conn) (*SSHSession, error) {
 	var config utils.SSHConfig
 	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
-		return nil, fmt.Errorf("invalid configuration: %v", err)
+		return nil, utils.NewAppError("INVALID_CONFIG", "Invalid configuration format", err)
 	}
 
 	authMethods := utils.GetSSHAuthMethods(config)
@@ -50,28 +50,28 @@ func StartSSHSession(ctx context.Context, configJSON string, conn *websocket.Con
 	address := fmt.Sprintf("%s:%d", config.Host, config.Port)
 	client, err := ssh.Dial("tcp", address, clientConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to SSH: %v", err)
+		return nil, utils.NewAppError("SSH_CONNECTION_FAILED", "Failed to connect to SSH server", err)
 	}
 
 	session, err := client.NewSession()
 	if err != nil {
 		client.Close()
-		return nil, fmt.Errorf("failed to create SSH session: %v", err)
+		return nil, utils.NewAppError("SSH_SESSION_CREATION_FAILED", "Failed to create SSH session", err)
 	}
 
 	stdin, err := session.StdinPipe()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open stdin: %v", err)
+		return nil, utils.NewAppError("STDIN_PIPE_FAILED", "Failed to open stdin", err)
 	}
 
 	stdout, err := session.StdoutPipe()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open stdout: %v", err)
+		return nil, utils.NewAppError("STDOUT_PIPE_FAILED", "Failed to open stdout", err)
 	}
 
 	stderr, err := session.StderrPipe()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open stderr: %v", err)
+		return nil, utils.NewAppError("STDERR_PIPE_FAILED", "Failed to open stderr", err)
 	}
 
 	modes := ssh.TerminalModes{
@@ -83,12 +83,12 @@ func StartSSHSession(ctx context.Context, configJSON string, conn *websocket.Con
 
 	if err := session.RequestPty("xterm-256color", 40, 80, modes); err != nil {
 		client.Close()
-		return nil, fmt.Errorf("failed to request pty: %v", err)
+		return nil, utils.NewAppError("PTY_REQUEST_FAILED", "Failed to request PTY", err)
 	}
 
 	if err := session.Shell(); err != nil {
 		client.Close()
-		return nil, fmt.Errorf("failed to start shell: %v", err)
+		return nil, utils.NewAppError("SHELL_START_FAILED", "Failed to start shell", err)
 	}
 
 	return &SSHSession{
@@ -128,7 +128,12 @@ func (s *SSHSession) HandleOutput(ctx context.Context) {
 					s.Close()
 					return
 				}
-				break
+
+				appErr := utils.NewAppError("OUTPUT_READ_FAILED", "Failed to read SSH session output", err)
+				appErr.Log()
+				s.conn.WriteJSON(utils.WSMessage{Type: "error", Content: appErr.Message})
+				s.Close()
+				return
 			}
 			s.conn.WriteJSON(utils.WSMessage{Type: "output", Content: string(buf[:n])})
 		}
@@ -144,11 +149,13 @@ func (s *SSHSession) SendInput(input string) {
 }
 
 // ResizeTerminal resizes the terminal window of the SSH session to the specified number of rows and columns.
-func (s *SSHSession) ResizeTerminal(rows, cols int) {
+func (s *SSHSession) ResizeTerminal(rows, cols int) error {
 	err := s.session.WindowChange(rows, cols)
 	if err != nil {
 		log.Printf("Error resizing terminal: %v", err)
+		return err
 	}
+	return nil
 }
 
 // Close closes the SSH session and releases any associated resources.
@@ -164,6 +171,5 @@ func (s *SSHSession) Close() {
 		if s.conn != nil {
 			s.conn.Close()
 		}
-
 	})
 }

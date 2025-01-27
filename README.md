@@ -119,6 +119,35 @@ Este servidor é composto por três pacotes principais:
       }
      ```
 
+## Mensagens de Erro
+
+A seguir estão os erros identificados no projeto, junto com seus respectivos códigos e mensagens:
+
+## Mapeamento de Erros no WebSocket
+
+| **Código**              | **Descrição**                                                                                         | **Mensagem ao Cliente**                            |
+|-------------------------|-----------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| `WS_UPGRADE_FAILED`      | Falha ao realizar o upgrade do protocolo HTTP para WebSocket.                                       | "Failed to upgrade to WebSocket"                 |
+| `MISSING_CLIENT_ID`      | Falta do cabeçalho `Sec-WebSocket-Key` na conexão WebSocket.                                        | "Sec-WebSocket-Key not provided"                 |
+| `WS_READ_FAILED`         | Erro ao tentar ler uma mensagem do WebSocket.                                                      | "Failed to read WebSocket message"               |
+| `SSH_SESSION_FAILED`     | Falha ao iniciar uma sessão SSH com as configurações fornecidas.                                   | "Failed to start SSH session"                    |
+| `RESIZE_FAILED`          | Erro ao redimensionar o terminal da sessão SSH.                                                    | "Failed to resize terminal"                      |
+| `UNKNOWN_MESSAGE_TYPE`   | Tipo de mensagem desconhecido recebido pelo servidor WebSocket.                                    | "Unknown message type received"                  |
+
+## Mapeamento de Erros no SSH
+
+| **Código do Erro**              | **Descrição**                                                                                          | **Cenário**                                                                                                                                                                                                 | **Mensagem ao Cliente**                            |
+|----------------------------------|--------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| `INVALID_CONFIG`                 | Configuração SSH inválida no JSON enviado.                                                             | O JSON enviado pelo cliente não está no formato esperado ou está faltando campos obrigatórios.                                                                                                           | "Invalid configuration format"                    |
+| `SSH_CONNECTION_FAILED`          | Falha ao conectar ao servidor SSH.                                                                     | O host ou a porta estão inacessíveis, ou as credenciais fornecidas são inválidas para autenticação.                                                                                                       | "Failed to connect to SSH server"                |
+| `SSH_SESSION_CREATION_FAILED`    | Falha ao criar uma nova sessão SSH.                                                                    | A conexão com o servidor SSH foi estabelecida, mas a criação da sessão falhou.                                                                                                                           | "Failed to create SSH session"                   |
+| `STDIN_PIPE_FAILED`              | Falha ao abrir o pipe de entrada padrão.                                                               | Ocorre ao tentar abrir o stdin da sessão SSH para enviar dados do cliente.                                                                                                                               | "Failed to open stdin"                            |
+| `STDOUT_PIPE_FAILED`             | Falha ao abrir o pipe de saída padrão.                                                                 | Ocorre ao tentar abrir o stdout da sessão SSH para ler dados enviados pelo servidor.                                                                                                                      | "Failed to open stdout"                           |
+| `STDERR_PIPE_FAILED`             | Falha ao abrir o pipe de erro padrão.                                                                  | Ocorre ao tentar abrir o stderr da sessão SSH para capturar mensagens de erro do servidor.                                                                                                                | "Failed to open stderr"                           |
+| `PTY_REQUEST_FAILED`             | Falha ao solicitar o Pseudo-Terminal (PTY).                                                            | A sessão SSH foi criada, mas não foi possível estabelecer o terminal interativo (PTY), geralmente devido a configurações do servidor remoto.                                                              | "Failed to request PTY"                           |
+| `SHELL_START_FAILED`             | Falha ao iniciar o shell interativo.                                                                   | A conexão SSH e o PTY foram estabelecidos, mas o shell remoto não pôde ser iniciado.                                                                                                                      | "Failed to start shell"                           |
+| `OUTPUT_READ_FAILED`             | Falha ao ler a saída da sessão SSH.                                                                    | Ocorre quando há um problema ao processar os dados de saída (stdout) enviados pelo servidor SSH, como desconexões inesperadas ou erros de leitura no buffer.                                               | "Failed to read SSH session output"              |
+
 ## Estrutura do Código
 
 ### `services`
@@ -141,10 +170,9 @@ Este servidor é composto por três pacotes principais:
 
 ## Próximos Passos
 
-1. **Melhorar tratativas de erros**
+1. **Melhorar tratativas de erros** :white_check_mark: :rocket:
 
    - Adicionar tratamento de erros para lidar com falhas na conexão SSH.
-   - Implementar mecanismos de recuperação para reconectar automaticamente em caso de desconexão.
 
 2. **Implementar Sistema de Login Seguro**:
 

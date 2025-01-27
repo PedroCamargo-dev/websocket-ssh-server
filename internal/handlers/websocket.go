@@ -35,14 +35,18 @@ var upgrader = websocket.Upgrader{
 func HandleWebSocket(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Error upgrading to WebSocket: %v", err)
+		appErr := utils.NewAppError("WS_UPGRADE_FAILED", "Failed to upgrade to WebSocket", err)
+		appErr.Log()
+		http.Error(w, appErr.Message, http.StatusInternalServerError)
 		return
 	}
 	defer conn.Close()
 
 	clientID := r.Header.Get("Sec-WebSocket-Key")
 	if clientID == "" {
-		log.Println("Sec-WebSocket-Key not provided")
+		appErr := utils.NewAppError("MISSING_CLIENT_ID", "Sec-WebSocket-Key not provided", nil)
+		appErr.Log()
+		conn.WriteJSON(utils.WSMessage{Type: "error", Content: appErr.Message})
 		return
 	}
 
@@ -57,13 +61,17 @@ func HandleWebSocket(ctx context.Context, w http.ResponseWriter, r *http.Request
 
 	var msg utils.WSMessage
 	if err := conn.ReadJSON(&msg); err != nil {
-		log.Printf("Error reading initial message: %v", err)
+		appErr := utils.NewAppError("WS_READ_FAILED", "Failed to read initial WebSocket message", err)
+		appErr.Log()
+		conn.WriteJSON(utils.WSMessage{Type: "error", Content: appErr.Message})
 		return
 	}
 
 	session, err := services.StartSSHSession(ctx, msg.Content, conn)
 	if err != nil {
-		log.Printf("Error starting SSH session: %v", err)
+		appErr := utils.NewAppError("SSH_SESSION_FAILED", "Failed to start SSH session", err)
+		appErr.Log()
+		conn.WriteJSON(utils.WSMessage{Type: "error", Content: appErr.Message})
 		return
 	}
 	defer session.Close()
@@ -82,7 +90,9 @@ func HandleWebSocket(ctx context.Context, w http.ResponseWriter, r *http.Request
 			return
 		default:
 			if err := conn.ReadJSON(&msg); err != nil {
-				log.Printf("Error reading WebSocket message: %v", err)
+				appErr := utils.NewAppError("WS_READ_FAILED", "Failed to read WebSocket message", err)
+				appErr.Log()
+				conn.WriteJSON(utils.WSMessage{Type: "error", Content: appErr.Message})
 				return
 			}
 
@@ -99,9 +109,16 @@ func HandleWebSocket(ctx context.Context, w http.ResponseWriter, r *http.Request
 				session.SendInput(msg.Content)
 				client.Mu.Unlock()
 			case "resize":
-				session.ResizeTerminal(msg.Rows, msg.Cols)
+				err := session.ResizeTerminal(msg.Rows, msg.Cols)
+				if err != nil {
+					appErr := utils.NewAppError("RESIZE_FAILED", "Failed to resize terminal", err)
+					appErr.Log()
+					conn.WriteJSON(utils.WSMessage{Type: "error", Content: appErr.Message})
+				}
 			default:
-				log.Printf("Unknown message type: %s", msg.Type)
+				appErr := utils.NewAppError("UNKNOWN_MESSAGE_TYPE", "Unknown message type received", nil)
+				appErr.Log()
+				conn.WriteJSON(utils.WSMessage{Type: "error", Content: appErr.Message})
 			}
 		}
 	}
